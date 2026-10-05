@@ -120,6 +120,80 @@ async function runTestSuite() {
     assert(false, 'increment_card_metric callable', err.message);
   }
 
+  // 3b. Verify Event Tracker RPC (Anon Executable with Rate Limiting)
+  console.log('\n--- Test 3b: Live Event Tracker RPC (record_card_event) ---');
+  try {
+    const postReq = () => new Promise((resolve) => {
+      const url = new URL('/rest/v1/rpc/record_card_event', SUPABASE_URL);
+      const req = https.request({
+        hostname: url.hostname,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          'apikey': ANON_KEY,
+          'Authorization': `Bearer ${ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+          catch (e) { resolve({ status: res.statusCode, body: data }); }
+        });
+      });
+      req.write(JSON.stringify({
+        p_card_slug: 'sudheer-borra',
+        p_event_type: 'page_view',
+        p_user_agent: 'TestSuite/1.0'
+      }));
+      req.end();
+    });
+
+    const res = await postReq();
+    assert(res.status === 200 && res.body?.success === true, 'record_card_event callable by anon visitors', `Status ${res.status}`);
+  } catch (err) {
+    assert(false, 'record_card_event callable', err.message);
+  }
+
+  // 3c. Verify Lead Capture RPC (submit_card_lead)
+  console.log('\n--- Test 3c: Live Lead Capture RPC (submit_card_lead) ---');
+  try {
+    const postReq = () => new Promise((resolve) => {
+      const url = new URL('/rest/v1/rpc/submit_card_lead', SUPABASE_URL);
+      const req = https.request({
+        hostname: url.hostname,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          'apikey': ANON_KEY,
+          'Authorization': `Bearer ${ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+          catch (e) { resolve({ status: res.statusCode, body: data }); }
+        });
+      });
+      req.write(JSON.stringify({
+        p_card_slug: 'sudheer-borra',
+        p_name: 'Test Lead',
+        p_phone: '+91 99999 88888',
+        p_email: 'testlead@example.com',
+        p_message: 'Automated test lead enquiry'
+      }));
+      req.end();
+    });
+
+    const res = await postReq();
+    assert(res.status === 200 && res.body?.success === true && res.body?.lead_id, 'submit_card_lead inserts lead and returns lead_id', `Lead ID: ${res.body?.lead_id}`);
+  } catch (err) {
+    assert(false, 'submit_card_lead callable', err.message);
+  }
+
   // 4. Verify Password Security & Isolation in AuthContext
   console.log('\n--- Test 4: Password Security & Clean Metadata Isolation ---');
   const authContextSource = fs.readFileSync(path.join(__dirname, '../../client/src/context/AuthContext.jsx'), 'utf8');
