@@ -1,0 +1,186 @@
+/* QR Code Studio & Printable Poster Styles */
+
+.qr-studio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .qr-studio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.qr-preview-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.qr-display-box {
+  background-color: #FFFFFF;
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Printable Reference Poster / Stand (Exact Visual Inspiration) */
+.printable-stand-wrapper {
+  background-color: #F1F5F9;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.printable-poster {
+  width: 100%;
+  max-width: 480px;
+  background-color: #FFFFFF;
+  border: 2px solid #0B2E59;
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  box-shadow: 0 10px 30px rgba(11, 46, 89, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.printable-company-logo {
+  max-height: 64px;
+  margin-bottom: 0.75rem;
+  object-fit: contain;
+}
+
+.printable-company-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0B2E59;
+  margin-bottom: 0.25rem;
+}
+
+.printable-tagline {
+  font-size: 0.8125rem;
+  color: #64748B;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+}
+
+.printable-qr-container {
+  position: relative;
+  background-color: #FFFFFF;
+  padding: 1rem;
+  border: 2px dashed #0B2E59;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+  display: inline-block;
+}
+
+.printable-scan-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #0B2E59;
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.2rem 0.85rem;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.printable-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0B2E59;
+  margin-bottom: 0.5rem;
+}
+
+.printable-subtitle {
+  font-size: 0.875rem;
+  color: #475569;
+  margin-bottom: 1.75rem;
+}
+
+/* 3-Step Process (Scan -> Open -> Save) */
+.printable-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  width: 100%;
+  padding-top: 1.25rem;
+  border-top: 1px solid #E2E8F0;
+}
+
+.printable-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.printable-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #0B2E59;
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.printable-step-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+/* Print CSS */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-stand-wrapper, .printable-poster, .printable-poster * {
+    visibility: visible;
+  }
+  .printable-stand-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    background: transparent;
+  }
+  .printable-poster {
+    box-shadow: none;
+    max-width: 100%;
+    border: 2px solid #000;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

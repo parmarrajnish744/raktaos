@@ -1,0 +1,325 @@
+/**
+ * Rakta Business OS - WordPress Frontend Styling
+ */
+
+:root {
+  --rakta-red: #E63946;
+  --rakta-navy: #1D3557;
+  --rakta-blue: #457B9D;
+  --rakta-bg: #F8FAFC;
+  --rakta-text: #0F172A;
+  --rakta-text-muted: #64748B;
+  --rakta-border: #E2E8F0;
+  --rakta-radius: 12px;
+}
+
+/* ==========================================================================
+   1. Digital Card Embed Shortcode
+   ========================================================================== */
+.rakta-card-embed {
+  max-width: 420px;
+  margin: 1.5rem auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--rakta-text);
+  box-sizing: border-box;
+}
+
+.rakta-card-embed * {
+  box-sizing: border-box;
+}
+
+.rakta-card-inner {
+  background: #FFFFFF;
+  border: 1px solid var(--rakta-border);
+  border-radius: var(--rakta-radius);
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rakta-card-inner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.rakta-card-header {
+  height: 90px;
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+}
+
+.rakta-badge-verified {
+  background: rgba(255, 255, 255, 0.92);
+  color: #065F46;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+}
+
+.rakta-card-body {
+  padding: 0 20px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.rakta-card-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  margin: -38px auto 12px;
+  border: 4px solid #FFFFFF;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  background: #FFFFFF;
+  overflow: hidden;
+}
+
+.rakta-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rakta-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--rakta-card-primary, var(--rakta-red)), var(--rakta-navy));
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.rakta-card-name {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--rakta-navy);
+}
+
+.rakta-card-designation {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--rakta-blue);
+}
+
+.rakta-card-company {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  color: var(--rakta-text-muted);
+}
+
+.rakta-card-tagline {
+  margin: 10px auto 14px;
+  font-size: 0.78rem;
+  background: #F1F5F9;
+  color: #334155;
+  padding: 4px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  font-style: italic;
+}
+
+.rakta-card-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.rakta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.rakta-btn-call {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-color: #BFDBFE;
+}
+.rakta-btn-call:hover {
+  background: #DBEAFE;
+}
+
+.rakta-btn-whatsapp {
+  background: #ECFDF5;
+  color: #047857;
+  border-color: #A7F3D0;
+}
+.rakta-btn-whatsapp:hover {
+  background: #D1FAE5;
+}
+
+.rakta-btn-email {
+  background: #F8FAFC;
+  color: #475569;
+  border-color: #E2E8F0;
+}
+.rakta-btn-email:hover {
+  background: #F1F5F9;
+}
+
+.rakta-card-cta-row {
+  margin-top: 12px;
+}
+
+.rakta-btn-primary {
+  width: 100%;
+  background: var(--rakta-card-primary, var(--rakta-red));
+  color: #FFFFFF;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+}
+.rakta-btn-primary:hover {
+  filter: brightness(0.92);
+  color: #FFFFFF;
+}
+
+.rakta-card-footer {
+  background: #F8FAFC;
+  border-top: 1px solid var(--rakta-border);
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--rakta-text-muted);
+}
+
+/* ==========================================================================
+   2. Lead Capture Form Shortcode
+   ========================================================================== */
+.rakta-lead-form-box {
+  max-width: 520px;
+  margin: 2rem auto;
+  background: #FFFFFF;
+  border: 1px solid var(--rakta-border);
+  border-radius: var(--rakta-radius);
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.rakta-lead-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--rakta-navy);
+  margin: 0 0 6px;
+}
+
+.rakta-lead-subtitle {
+  font-size: 0.875rem;
+  color: var(--rakta-text-muted);
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.rakta-form-row {
+  margin-bottom: 14px;
+}
+
+.rakta-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.rakta-input,
+.rakta-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--rakta-border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--rakta-text);
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+
+.rakta-input:focus,
+.rakta-textarea:focus {
+  outline: none;
+  border-color: var(--rakta-red);
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.15);
+}
+
+.rakta-submit-btn {
+  width: 100%;
+  background: var(--rakta-red);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 18px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s ease;
+}
+
+.rakta-submit-btn:hover {
+  background: #D90429;
+}
+
+.rakta-form-response {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.rakta-form-response.success {
+  background: #DEF7EC;
+  color: #03543F;
+  border: 1px solid #BCF0DA;
+}
+
+.rakta-form-response.error {
+  background: #FDE8E8;
+  color: #9B1C1C;
+  border: 1px solid #FBD5D5;
+}
+
+/* ==========================================================================
+   3. SaaS Registration CTA Button
+   ========================================================================== */
+.rakta-app-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rakta-red);
+  color: #FFFFFF;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(230, 57, 70, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rakta-app-cta-btn:hover {
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(230, 57, 70, 0.35);
+}
