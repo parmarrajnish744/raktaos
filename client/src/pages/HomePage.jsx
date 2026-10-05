@@ -45,7 +45,7 @@ export default function HomePage({ onNavigate }) {
     theme: 'corporate-blue',
     primary_color: '#0B2E59',
     secondary_color: '#2563EB',
-    public_url: `${window.location.origin}/card/sudheer-borra`
+    public_url: `${window.location.origin}/c/sudheer-borra`
   };
 
   const demoAddresses = [

@@ -102,7 +102,7 @@ export default function Sidebar({ currentPath, onNavigate, mobileOpen, onCloseMo
 
         <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
           <button
-            onClick={() => handleLinkClick('/card/sudheer-borra')}
+            onClick={() => handleLinkClick('/c/sudheer-borra')}
             className="sidebar-link"
             style={{ color: 'var(--secondary)', backgroundColor: 'var(--secondary-subtle)' }}
           >

@@ -51,7 +51,7 @@ class Rakta_Shortcodes {
 
         $app_url = rtrim(get_option('rakta_app_url', 'https://app.raktabusiness.com'), '/');
         $card_url = $app_url . '/c/' . rawurlencode($card['slug']);
-        $vcard_url = $app_url . '/api/cards/' . rawurlencode($card['slug']) . '/vcard';
+        $vcard_url = $app_url . '/c/' . rawurlencode($card['slug']) . '?download=vcard';
         $clean_phone = preg_replace('/[^0-9]/', '', $card['phone'] ?? '');
         $whatsapp_link = $clean_phone ? 'https://wa.me/' . $clean_phone . '?text=' . rawurlencode('Hello ' . $card['full_name'] . ', I connected via your Rakta Digital Business Card.') : '#';
 
@@ -67,8 +67,11 @@ class Rakta_Shortcodes {
                 <!-- Avatar and Profile Info -->
                 <div class="rakta-card-body">
                     <div class="rakta-card-avatar">
-                        <?php if (!empty($card['profile_photo'])): ?>
-                            <img src="<?php echo esc_url($card['profile_photo']); ?>" alt="<?php echo esc_attr($card['full_name']); ?>" />
+                        <?php
+                        $avatar_url = !empty($card['profile_image_url']) ? $card['profile_image_url'] : (!empty($card['profile_photo']) ? $card['profile_photo'] : '');
+                        if (!empty($avatar_url)):
+                        ?>
+                            <img src="<?php echo esc_url($avatar_url); ?>" alt="<?php echo esc_attr($card['full_name']); ?>" />
                         <?php else: ?>
                             <div class="rakta-avatar-placeholder">
                                 <?php echo esc_html(mb_substr($card['full_name'] ?? 'R', 0, 1)); ?>
@@ -77,8 +80,8 @@ class Rakta_Shortcodes {
                     </div>
 
                     <h3 class="rakta-card-name"><?php echo esc_html($card['full_name']); ?></h3>
-                    <p class="rakta-card-designation"><?php echo esc_html($card['designation']); ?></p>
-                    <p class="rakta-card-company"><?php echo esc_html($card['company_name']); ?></p>
+                    <p class="rakta-card-designation"><?php echo esc_html($card['designation'] ?? ''); ?></p>
+                    <p class="rakta-card-company"><?php echo esc_html($card['company_name'] ?? ($card['company'] ?? '')); ?></p>
 
                     <?php if (!empty($card['tagline'])): ?>
                         <div class="rakta-card-tagline"><?php echo esc_html($card['tagline']); ?></div>

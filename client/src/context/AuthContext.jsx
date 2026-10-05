@@ -108,12 +108,43 @@ export function AuthProvider({ children }) {
   };
 
   const updateProfile = async (userData) => {
-    const { data, error } = await supabase.auth.updateUser({
-      data: userData
-    });
-    if (error) throw new Error(error.message);
-    setUser(prev => ({ ...prev, ...userData }));
-    return { user: { ...user, ...userData } };
+    const { password, new_password, current_password, ...metadata } = userData;
+    const targetNewPassword = new_password || password;
+
+    // If changing password, verify current password first if provided
+    if (targetNewPassword) {
+      if (current_password && user?.email) {
+        const { error: verifyErr } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: current_password
+        });
+        if (verifyErr) {
+          throw new Error('Current password verification failed. Please enter your correct current password.');
+        }
+      }
+
+      // Update actual Supabase Auth password
+      const { error: passErr } = await supabase.auth.updateUser({
+        password: targetNewPassword
+      });
+      if (passErr) throw new Error(passErr.message);
+    }
+
+    // Clean any accidental password keys from metadata before saving
+    delete metadata.new_password;
+    delete metadata.current_password;
+    delete metadata.password;
+
+    // Update metadata if any fields remain
+    if (Object.keys(metadata).length > 0) {
+      const { data, error: metaErr } = await supabase.auth.updateUser({
+        data: metadata
+      });
+      if (metaErr) throw new Error(metaErr.message);
+    }
+
+    setUser(prev => ({ ...prev, ...metadata }));
+    return { user: { ...user, ...metadata } };
   };
 
   return (

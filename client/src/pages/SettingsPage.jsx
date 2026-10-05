@@ -42,7 +42,7 @@ export default function SettingsPage() {
         </div>
 
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1rem' }}>
-          The backend API exposes standard JSON REST endpoints protected with JWT bearer tokens. A native Android (Kotlin / Jetpack Compose) or iOS (Swift / SwiftUI) application can directly consume these endpoints for:
+          Rakta Business OS utilizes Supabase Cloud PostgREST endpoints protected with JWT bearer tokens. A native Android (Kotlin / Jetpack Compose) or iOS (Swift / SwiftUI) application can directly consume these endpoints:
         </p>
 
         <div style={{
@@ -55,32 +55,36 @@ export default function SettingsPage() {
           lineHeight: 1.8,
           border: '1px solid var(--border)'
         }}>
-          <div>POST /api/auth/login</div>
-          <div>GET  /api/cards</div>
-          <div>POST /api/cards</div>
-          <div>GET  /api/cards/:id/qr</div>
-          <div>GET  /api/public/card/:username</div>
-          <div>POST /api/public/cards/:id/scan</div>
+          <div>POST /auth/v1/token?grant_type=password (Supabase Auth)</div>
+          <div>GET  /rest/v1/cards?select=*&is_active=eq.true</div>
+          <div>POST /rest/v1/cards (User Card Creation via RLS)</div>
+          <div>POST /rest/v1/rpc/record_card_event (Rate-Limited Analytics)</div>
+          <div>POST /rest/v1/rpc/submit_card_lead (Public Lead Ingestion)</div>
+          <div>POST /storage/v1/object/card-assets (Direct Media Upload)</div>
         </div>
       </div>
 
       {/* Security & Data Preferences */}
       <div className="card-panel">
         <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '1rem' }}>
-          Data Standards & Security
+          Data Standards & Production Architecture
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Shield size={18} color="var(--success)" />
+            <span>Supabase PostgreSQL Cloud with strict Row-Level Security (RLS) tenant isolation</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Shield size={18} color="var(--success)" />
+            <span>Cryptographic JWT session authentication with auto-refresh token handling</span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Shield size={18} color="var(--success)" />
             <span>RFC 2426 compliant vCard 3.0 export protocol</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Shield size={18} color="var(--success)" />
-            <span>Bcrypt 10-round salted password hashing</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Shield size={18} color="var(--success)" />
-            <span>SQLite database with persistent Write-Ahead-Logging (WAL)</span>
+            <span>Zero-server runtime: Standalone web client with Supabase Edge Functions</span>
           </div>
         </div>
       </div>

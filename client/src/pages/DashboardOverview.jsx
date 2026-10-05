@@ -1,48 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import {
   CreditCard,
+  TrendingUp,
   QrCode,
   Eye,
   Download,
   Plus,
   Share2,
   ExternalLink,
-  Edit3,
-  TrendingUp,
-  AlertCircle
+  Edit,
+  Sparkles,
+  Inbox
 } from 'lucide-react';
-import { getUserCards } from '../services/cardService';
-import { getPublicCardUrl } from '../utils/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getUserCards, getOwnerLeads } from '../services/cardService';
 import QRModal from '../components/card-ui/QRModal';
 import ShareModal from '../components/card-ui/ShareModal';
+import { getPublicCardUrl } from '../utils/supabaseClient';
 
 export default function DashboardOverview({ onNavigate }) {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [cards, setCards] = useState([]);
+  const [leadsCount, setLeadsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [activeQRCard, setActiveQRCard] = useState(null);
   const [activeShareCard, setActiveShareCard] = useState(null);
 
   useEffect(() => {
-    async function loadCards() {
+    async function loadDashboardData() {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
       try {
-        const loadedCards = await getUserCards(user?.id);
+        const [loadedCards, loadedLeads] = await Promise.all([
+          getUserCards(user.id),
+          getOwnerLeads(user.id)
+        ]);
         setCards(loadedCards || []);
+        setLeadsCount(loadedLeads ? loadedLeads.length : 0);
       } catch (err) {
-        showToast('error', 'Failed to load business cards');
+        showToast('error', 'Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     }
-    loadCards();
+    loadDashboardData();
   }, [user?.id, showToast]);
 
   const totalCards = cards.length;
-  const activeCards = cards.filter((c) => c.status === 'active').length;
+  // Resolve mismatch: card is active if is_active !== false AND status !== 'inactive'
+  const activeCards = cards.filter((c) => c.is_active !== false && c.status !== 'inactive').length;
   const totalViews = cards.reduce((acc, c) => acc + (c.views_count || 0), 0);
   const totalScans = cards.reduce((acc, c) => acc + (c.scans_count || 0), 0);
   const totalDownloads = cards.reduce((acc, c) => acc + (c.downloads_count || 0), 0);
@@ -73,28 +84,31 @@ export default function DashboardOverview({ onNavigate }) {
             display: 'block',
             marginBottom: '0.25rem'
           }}>
-            Digital Business Card Dashboard
+            Rakta Business OS &bull; Phase 1 Production
           </span>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '0.5rem' }}>
-            Welcome back, {user?.name?.split(' ')[0] || 'Member'}!
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+            Welcome back, {user?.name || 'Partner'}!
           </h2>
-          <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9375rem', maxWidth: '520px' }}>
-            Manage your digital cards, analyze QR scans, and monitor contact downloads in real-time.
+          <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.925rem', marginTop: '0.35rem', margin: 0 }}>
+            Here is your live real-time digital business identity, contact engagement, and inbound lead metrics.
           </p>
         </div>
 
-        <button
-          onClick={() => onNavigate('/dashboard/cards/create')}
-          className="btn btn-secondary btn-lg"
-          style={{ backgroundColor: '#2563EB', color: '#FFFFFF', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)' }}
-        >
-          <Plus size={18} />
-          <span>Create New Card</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button
+            onClick={() => onNavigate('/dashboard/cards/create')}
+            className="btn btn-secondary btn-lg"
+            style={{ boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}
+            id="btn-create-card-banner"
+          >
+            <Plus size={18} />
+            <span>Create New Card</span>
+          </button>
+        </div>
       </div>
 
-      {/* Metrics Overview Cards */}
-      <div className="metrics-grid">
+      {/* Primary Analytics Metric Cards Grid */}
+      <div className="dashboard-grid" style={{ marginBottom: '2.5rem' }}>
         <div className="metric-card">
           <div className="metric-icon-wrap" style={{ backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)' }}>
             <CreditCard size={24} />
@@ -116,6 +130,16 @@ export default function DashboardOverview({ onNavigate }) {
         </div>
 
         <div className="metric-card">
+          <div className="metric-icon-wrap" style={{ backgroundColor: '#FEF3C7', color: '#B45309' }}>
+            <Eye size={24} />
+          </div>
+          <div>
+            <div className="metric-val">{totalViews}</div>
+            <div className="metric-label">Profile Views</div>
+          </div>
+        </div>
+
+        <div className="metric-card">
           <div className="metric-icon-wrap" style={{ backgroundColor: 'var(--secondary-light)', color: 'var(--secondary)' }}>
             <QrCode size={24} />
           </div>
@@ -126,12 +150,12 @@ export default function DashboardOverview({ onNavigate }) {
         </div>
 
         <div className="metric-card">
-          <div className="metric-icon-wrap" style={{ backgroundColor: '#FEF3C7', color: '#B45309' }}>
-            <Eye size={24} />
+          <div className="metric-icon-wrap" style={{ backgroundColor: '#F3E8FF', color: '#7E22CE' }}>
+            <Inbox size={24} />
           </div>
           <div>
-            <div className="metric-val">{totalViews}</div>
-            <div className="metric-label">Profile Views</div>
+            <div className="metric-val">{leadsCount}</div>
+            <div className="metric-label">Inbound Leads</div>
           </div>
         </div>
 
@@ -180,16 +204,18 @@ export default function DashboardOverview({ onNavigate }) {
               className="btn btn-primary"
             >
               <Plus size={16} />
-              <span>Create Your First Card</span>
+              <span>Create First Business Card</span>
             </button>
           </div>
         ) : (
-          <div className="cards-grid">
-            {cards.slice(0, 4).map((card) => {
-              const cardPublicUrl = `${window.location.origin}/card/${card.username}`;
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+            {cards.slice(0, 3).map((card) => {
+              const isCardActive = card.is_active !== false && card.status !== 'inactive';
+              const cardPublicUrl = card.public_url || (card.slug ? getPublicCardUrl(card.slug) : `/c/${card.slug || card.id}`);
+
               return (
-                <div key={card.id} className="card-item-box">
-                  <div className="card-item-header">
+                <div key={card.id} className="card-item-card" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.25rem' }}>
+                  <div className="card-item-header" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                     <div style={{
                       width: 44,
                       height: 44,
@@ -213,8 +239,8 @@ export default function DashboardOverview({ onNavigate }) {
                         {card.designation} &bull; {card.company_name}
                       </div>
                     </div>
-                    <span className={`badge ${card.status === 'active' ? 'badge-success' : 'badge-warning'}`}>
-                      {card.status}
+                    <span className={`badge ${isCardActive ? 'badge-success' : 'badge-warning'}`}>
+                      {isCardActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
 
@@ -223,7 +249,7 @@ export default function DashboardOverview({ onNavigate }) {
                       Public URL:
                     </div>
                     <a
-                      href={card.slug ? `/c/${card.slug}` : `/card/${card.username}`}
+                      href={`/c/${card.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
@@ -237,62 +263,49 @@ export default function DashboardOverview({ onNavigate }) {
                         marginBottom: '1rem'
                       }}
                     >
-                      <span>{card.slug ? `/c/${card.slug}` : `/card/${card.username}`}</span>
+                      <span>/c/{card.slug}</span>
                       <ExternalLink size={13} />
                     </a>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center', backgroundColor: 'var(--surface-alt)', padding: '0.625rem', borderRadius: 'var(--radius-sm)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', backgroundColor: 'var(--surface-alt)', padding: '0.75rem', borderRadius: 'var(--radius-md)', textAlign: 'center', marginBottom: '1.25rem' }}>
                       <div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)' }}>{card.views_count || 0}</div>
-                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Views</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{card.views_count || 0}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Views</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--secondary)' }}>{card.scans_count || 0}</div>
-                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Scans</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{card.scans_count || 0}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Scans</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--success-dark)' }}>{card.downloads_count || 0}</div>
-                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>vCards</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{card.downloads_count || 0}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Downloads</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="card-item-actions">
-                    <div style={{ display: 'flex', gap: '0.35rem' }}>
-                      <button
-                        onClick={() => onNavigate(`/dashboard/cards/${card.id}/edit`)}
-                        className="btn btn-ghost btn-sm"
-                        title="Edit Card"
-                      >
-                        <Edit3 size={15} />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => setActiveQRCard(card)}
-                        className="btn btn-ghost btn-sm"
-                        title="View QR Code"
-                      >
-                        <QrCode size={15} />
-                        <span>QR</span>
-                      </button>
-                      <button
-                        onClick={() => setActiveShareCard(card)}
-                        className="btn btn-ghost btn-sm"
-                        title="Share Card"
-                      >
-                        <Share2 size={15} />
-                      </button>
-                    </div>
-
-                    <a
-                      href={card.slug ? `/c/${card.slug}` : `/card/${card.username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-primary btn-sm"
+                  <div className="card-item-footer" style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid var(--border-light)', paddingTop: '0.75rem' }}>
+                    <button
+                      onClick={() => onNavigate(`/dashboard/cards/edit/${card.id}`)}
+                      className="btn btn-outline btn-sm"
+                      style={{ flex: 1 }}
                     >
-                      <Eye size={14} />
-                      <span>Preview</span>
-                    </a>
+                      <Edit size={14} />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveQRCard(card)}
+                      className="btn btn-ghost btn-sm btn-icon"
+                      title="Show QR Code"
+                    >
+                      <QrCode size={16} />
+                    </button>
+                    <button
+                      onClick={() => setActiveShareCard(card)}
+                      className="btn btn-ghost btn-sm btn-icon"
+                      title="Share Card"
+                    >
+                      <Share2 size={16} />
+                    </button>
                   </div>
                 </div>
               );
@@ -301,24 +314,20 @@ export default function DashboardOverview({ onNavigate }) {
         )}
       </div>
 
-      {/* QR Modal */}
+      {/* Modals */}
       {activeQRCard && (
         <QRModal
+          card={activeQRCard}
           isOpen={!!activeQRCard}
           onClose={() => setActiveQRCard(null)}
-          cardUrl={getPublicCardUrl(activeQRCard.slug || activeQRCard.username)}
-          cardName={activeQRCard.full_name}
-          primaryColor={activeQRCard.primary_color}
         />
       )}
 
-      {/* Share Modal */}
       {activeShareCard && (
         <ShareModal
+          card={activeShareCard}
           isOpen={!!activeShareCard}
           onClose={() => setActiveShareCard(null)}
-          cardUrl={getPublicCardUrl(activeShareCard.slug || activeShareCard.username)}
-          cardName={activeShareCard.full_name}
         />
       )}
     </div>

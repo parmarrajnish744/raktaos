@@ -427,6 +427,49 @@ export default function DigitalCard({
           </div>
         )}
 
+        {/* Products & Services Section (Phase I) */}
+        {card.services && card.services.length > 0 && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div className="card-section-title">
+              <Briefcase size={14} />
+              <span>Products & Services</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {card.services.map((srv, idx) => (
+                <div key={srv.id || idx} className="office-card" style={{ padding: '0.875rem 1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.925rem', color: 'var(--text-primary)' }}>
+                      {srv.title}
+                    </div>
+                    {srv.price && (
+                      <span className="badge badge-success" style={{ fontWeight: 700, fontSize: '0.75rem' }}>
+                        {srv.price}
+                      </span>
+                    )}
+                  </div>
+                  {srv.description && (
+                    <p style={{ margin: '0.35rem 0 0.5rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                      {srv.description}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onEventTrack) onEventTrack('lead_click');
+                      setEnquiryOpen(true);
+                    }}
+                    className="btn btn-outline btn-sm"
+                    style={{ marginTop: '0.25rem', alignSelf: 'flex-start', fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
+                  >
+                    <span>Enquire About This</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Social Media Links */}
         {socialLinks && socialLinks.length > 0 && (
           <div>

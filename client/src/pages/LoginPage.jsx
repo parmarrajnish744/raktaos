@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CreditCard, Lock, Mail, ArrowRight, UserCheck, Shield } from 'lucide-react';
+import { CreditCard, Lock, Mail, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -19,21 +19,6 @@ export default function LoginPage({ onNavigate }) {
       onNavigate('/dashboard');
     } catch (err) {
       showToast('error', err.message || 'Invalid email or password');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickDemo = async (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setLoading(true);
-    try {
-      await login(demoEmail, demoPass);
-      showToast('success', `Logged in as ${demoEmail}!`);
-      onNavigate('/dashboard');
-    } catch (err) {
-      showToast('error', err.message || 'Demo login failed');
     } finally {
       setLoading(false);
     }
@@ -75,39 +60,6 @@ export default function LoginPage({ onNavigate }) {
           </p>
         </div>
 
-        {/* Fast Login Bar */}
-        <div style={{
-          backgroundColor: 'var(--primary-subtle)',
-          borderRadius: 'var(--radius-md)',
-          padding: '0.875rem',
-          marginBottom: '1.5rem',
-          border: '1px solid var(--border)'
-        }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '0.5rem', textAlign: 'center' }}>
-            Quick Demo Accounts (1-Click)
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('demo@raktabusiness.com', 'Password123!')}
-              className="btn btn-primary btn-sm"
-              style={{ fontSize: '0.75rem', padding: '0.35rem 0.5rem' }}
-            >
-              <UserCheck size={13} />
-              <span>Demo User</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('admin@raktabusiness.com', 'AdminPass123!')}
-              className="btn btn-secondary btn-sm"
-              style={{ fontSize: '0.75rem', padding: '0.35rem 0.5rem' }}
-            >
-              <Shield size={13} />
-              <span>Admin User</span>
-            </button>
-          </div>
-        </div>
-
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -129,7 +81,10 @@ export default function LoginPage({ onNavigate }) {
           <div className="form-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label className="form-label form-label-required">Password</label>
-              <span style={{ fontSize: '0.75rem', color: 'var(--secondary)', cursor: 'pointer' }} onClick={() => showToast('info', 'Demo password is Password123!')}>
+              <span
+                style={{ fontSize: '0.75rem', color: 'var(--secondary)', cursor: 'pointer' }}
+                onClick={() => showToast('info', 'Please contact support or your administrator to reset your password.')}
+              >
                 Forgot password?
               </span>
             </div>

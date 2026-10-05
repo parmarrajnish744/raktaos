@@ -22,14 +22,22 @@ export default function PublicCardPage({ slug, username, onNavigate }) {
         const comp = card.company_name || card.company || '';
         document.title = `${card.full_name}${card.designation ? ` | ${card.designation}` : ''}${comp ? ` | ${comp}` : ''}`;
 
-        // Automatically record page view in Supabase
+        // Automatically record page view in Supabase with session deduplication
         const cardSlug = card.slug || targetIdentifier;
-        trackCardMetric(cardSlug, 'view');
+        const viewKey = `rakta_viewed_${cardSlug}`;
+        if (!sessionStorage.getItem(viewKey)) {
+          trackCardMetric(cardSlug, 'view');
+          sessionStorage.setItem(viewKey, '1');
+        }
 
-        // Check if opened via QR scan (?scan=1 or ?src=qr)
+        // Check if opened via QR scan (?scan=1 or ?src=qr) with session deduplication
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('scan') === '1' || urlParams.get('src') === 'qr') {
-          trackCardMetric(cardSlug, 'scan');
+          const scanKey = `rakta_scanned_${cardSlug}`;
+          if (!sessionStorage.getItem(scanKey)) {
+            trackCardMetric(cardSlug, 'scan');
+            sessionStorage.setItem(scanKey, '1');
+          }
         }
 
         // Check if reached via vCard download shortcut (?download=vcard or ?action=vcard)

@@ -11,9 +11,11 @@ import {
   Filter,
   CreditCard,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Download,
+  Trash2
 } from 'lucide-react';
-import { getOwnerLeads, updateLeadStatus } from '../services/cardService';
+import { getOwnerLeads, updateLeadStatus, deleteLead } from '../services/cardService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -24,6 +26,52 @@ export default function LeadsPage({ onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const handleExportCSV = () => {
+    if (leads.length === 0) {
+      showToast('info', 'No leads available to export.');
+      return;
+    }
+
+    const headers = ['Date', 'Name', 'Phone', 'Email', 'Status', 'Card / Business', 'Source', 'Message'];
+    const rows = leads.map(l => [
+      l.created_at ? new Date(l.created_at).toLocaleString() : '',
+      l.name || '',
+      l.phone || '',
+      l.email || '',
+      l.status || 'New',
+      l.card_info?.full_name ? `${l.card_info.full_name} (${l.card_info.company_name || ''})` : (l.card_id || 'Direct'),
+      l.source || 'public_card',
+      (l.message || '').replace(/"/g, '""')
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `rakta-leads-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('success', `Exported ${leads.length} leads to CSV.`);
+  };
+
+  const handleDeleteLead = async (leadId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this lead?')) return;
+    try {
+      await deleteLead(leadId);
+      showToast('success', 'Lead deleted successfully.');
+      setLeads(prev => prev.filter(l => l.id !== leadId));
+    } catch (err) {
+      showToast('error', err.message || 'Failed to delete lead.');
+    }
+  };
 
   const fetchLeads = async () => {
     try {
@@ -103,6 +151,18 @@ export default function LeadsPage({ onNavigate }) {
             High-intent customer messages and contact enquiries captured from your digital business cards.
           </p>
         </div>
+
+        <button
+          onClick={handleExportCSV}
+          disabled={leads.length === 0}
+          className="btn btn-outline"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+          id="btn-export-leads-csv"
+          title="Download all leads as a CSV spreadsheet"
+        >
+          <Download size={16} />
+          <span>Export CSV</span>
+        </button>
       </div>
 
       {/* Metrics Counters */}
@@ -282,6 +342,16 @@ export default function LeadsPage({ onNavigate }) {
                       <option value="Converted">Mark: Converted</option>
                       <option value="Lost">Mark: Lost</option>
                     </select>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteLead(lead.id)}
+                      className="btn btn-outline btn-sm btn-icon"
+                      style={{ color: 'var(--danger)', borderColor: 'var(--border)' }}
+                      title="Delete Lead"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
 

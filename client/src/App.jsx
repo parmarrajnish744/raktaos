@@ -26,7 +26,7 @@ import PublicCardPage from './pages/PublicCardPage';
 import LeadsPage from './pages/LeadsPage';
 
 function AppContent() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   const [currentPath, setCurrentPath] = useState(window.location.pathname || '/');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -120,7 +120,23 @@ function AppContent() {
       dashboardContent = <SettingsPage onNavigate={navigate} />;
       pageTitle = 'Settings & Mobile API';
     } else if (currentPath === '/admin') {
-      dashboardContent = <AdminPage onNavigate={navigate} />;
+      if (!isAdmin) {
+        dashboardContent = (
+          <div className="card-panel" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', maxWidth: '540px', margin: '2rem auto' }}>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.5rem' }}>
+              Access Denied
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
+              The Administrative Control Panel is restricted strictly to platform administrators.
+            </p>
+            <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
+              Return to Dashboard
+            </button>
+          </div>
+        );
+      } else {
+        dashboardContent = <AdminPage onNavigate={navigate} />;
+      }
       pageTitle = 'System Admin Panel';
     } else {
       dashboardContent = <DashboardOverview onNavigate={navigate} />;

@@ -15,8 +15,10 @@ import {
 } from 'lucide-react';
 import { getUserCards, getCardAnalytics } from '../services/cardService';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function AnalyticsPage() {
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [cards, setCards] = useState([]);
   const [selectedCardId, setSelectedCardId] = useState('');
@@ -26,8 +28,12 @@ export default function AnalyticsPage() {
   // Load cards list
   useEffect(() => {
     async function loadCards() {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
       try {
-        const loaded = await getUserCards();
+        const loaded = await getUserCards(user.id);
         setCards(loaded || []);
         if (loaded && loaded.length > 0) {
           // Check URL query param if present
@@ -44,7 +50,7 @@ export default function AnalyticsPage() {
       }
     }
     loadCards();
-  }, [showToast]);
+  }, [user?.id, showToast]);
 
   // Load analytics when selectedCardId changes
   useEffect(() => {

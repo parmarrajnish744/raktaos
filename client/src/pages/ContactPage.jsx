@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { submitGeneralContact } from '../services/cardService';
 
 export default function ContactPage() {
   const { showToast } = useToast();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -12,10 +14,18 @@ export default function ContactPage() {
     message: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    showToast('success', 'Your message has been sent successfully. We will respond within 24 hours!');
+    setSubmitting(true);
+    try {
+      await submitGeneralContact(formData);
+      setSubmitted(true);
+      showToast('success', 'Your message has been sent successfully. We will respond within 24 hours!');
+    } catch (err) {
+      showToast('error', err.message || 'Failed to submit message.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -103,9 +113,9 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary btn-block">
+                <button type="submit" disabled={submitting} className="btn btn-primary btn-block">
                   <Send size={16} />
-                  <span>Send Message</span>
+                  <span>{submitting ? 'Sending...' : 'Send Message'}</span>
                 </button>
               </form>
             )}

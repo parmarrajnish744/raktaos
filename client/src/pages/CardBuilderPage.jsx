@@ -9,7 +9,6 @@ import {
   Edit,
   Sparkles
 } from 'lucide-react';
-import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { createCardInSupabase, updateCardInSupabase, getCardById } from '../services/cardService';
@@ -147,12 +146,17 @@ export default function CardBuilderPage({ editCardId, onNavigate }) {
 
   // Submit / Publish to Supabase
   const handlePublish = async () => {
+    if (!user?.id) {
+      showToast('error', 'Please sign in to publish your digital business card.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const payload = {
         ...formData,
         addresses,
-        social_links: socialLinks
+        social_links: socialLinks,
+        services: formData.services || []
       };
 
       let result;
@@ -162,7 +166,7 @@ export default function CardBuilderPage({ editCardId, onNavigate }) {
         showToast('success', 'Digital Business Card updated successfully!');
       } else {
         // Create new card in Supabase with auto non-guessable slug
-        result = await createCardInSupabase(payload, user?.id);
+        result = await createCardInSupabase(payload, user.id);
         showToast('success', 'Digital Business Card created and published to Supabase!');
       }
 
@@ -272,11 +276,11 @@ export default function CardBuilderPage({ editCardId, onNavigate }) {
         {/* Form Column */}
         <div style={{ display: mobileTab === 'form' ? 'block' : 'none' }} className="builder-form-col">
           {currentStep === 1 && (
-            <Step1Personal formData={formData} onChange={handleFieldChange} />
+            <Step1Personal formData={formData} onChange={handleFieldChange} userId={user?.id} />
           )}
 
           {currentStep === 2 && (
-            <Step2Company formData={formData} onChange={handleFieldChange} />
+            <Step2Company formData={formData} onChange={handleFieldChange} userId={user?.id} />
           )}
 
           {currentStep === 3 && (

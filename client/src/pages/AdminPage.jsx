@@ -11,11 +11,12 @@ import {
   XCircle,
   ExternalLink
 } from 'lucide-react';
-import { api } from '../utils/api';
 import { supabase } from '../utils/supabaseClient';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
-export default function AdminPage() {
+export default function AdminPage({ onNavigate }) {
+  const { user, isAdmin } = useAuth();
   const { showToast } = useToast();
   const [tab, setTab] = useState('cards'); // 'cards' or 'users'
   const [overview, setOverview] = useState(null);
@@ -23,59 +24,76 @@ export default function AdminPage() {
   const [cardsList, setCardsList] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  if (!isAdmin) {
+    return (
+      <div className="card-panel" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', maxWidth: '540px', margin: '2rem auto' }}>
+        <div style={{
+          width: 56,
+          height: 56,
+          borderRadius: 16,
+          backgroundColor: 'rgba(230, 57, 70, 0.1)',
+          color: 'var(--danger)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 1.25rem'
+        }}>
+          <ShieldAlert size={28} />
+        </div>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.5rem' }}>
+          Access Denied
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
+          The Administrative Control Panel is restricted strictly to platform administrators. Your account ({user?.email || 'Current user'}) does not have administrator privileges.
+        </p>
+        <button
+          onClick={() => onNavigate && onNavigate('/dashboard')}
+          className="btn btn-primary"
+        >
+          Return to Dashboard
+        </button>
+      </div>
+    );
+  }
+
   const fetchAdminData = async () => {
     try {
-      // 1. Try Express API first if token present
-      const [overRes, usersRes, cardsRes] = await Promise.all([
-        api.getAdminOverview(),
-        api.getAdminUsers(),
-        api.getAdminCards()
-      ]);
-      setOverview(overRes.stats);
-      setUsersList(usersRes.users || []);
-      setCardsList(cardsRes.cards || []);
-      setLoading(false);
-      return;
+      const { data: cards, error } = await supabase.from('cards').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      const loadedCards = cards || [];
+      setCardsList(loadedCards);
+
+      const totalViews = loadedCards.reduce((a, b) => a + (b.views_count || 0), 0);
+      const totalScans = loadedCards.reduce((a, b) => a + (b.scans_count || 0), 0);
+      const totalDownloads = loadedCards.reduce((a, b) => a + (b.downloads_count || 0), 0);
+      const activeCards = loadedCards.filter(c => c.is_active !== false && c.status !== 'inactive').length;
+
+      // Extract unique user IDs from loaded cards
+      const userIds = [...new Set(loadedCards.map(c => c.user_id).filter(Boolean))];
+      const syntheticUsers = userIds.map(uid => ({
+        id: uid,
+        name: loadedCards.find(c => c.user_id === uid)?.full_name || 'Card Owner',
+        email: loadedCards.find(c => c.user_id === uid)?.email || 'user@raktabusiness.com',
+        role: 'USER',
+        cards_count: loadedCards.filter(c => c.user_id === uid).length,
+        created_at: loadedCards.find(c => c.user_id === uid)?.created_at
+      }));
+
+      setUsersList(syntheticUsers);
+
+      setOverview({
+        totalUsers: syntheticUsers.length,
+        totalCards: loadedCards.length,
+        activeCards,
+        totalViews,
+        totalScans,
+        totalDownloads
+      });
     } catch (err) {
-      // 2. Gracefully fall back to Supabase client
-      try {
-        const { data: cards } = await supabase.from('cards').select('*');
-        const loadedCards = cards || [];
-        setCardsList(loadedCards);
-
-        const totalViews = loadedCards.reduce((a, b) => a + (b.views_count || 0), 0);
-        const totalScans = loadedCards.reduce((a, b) => a + (b.scans_count || 0), 0);
-        const totalDownloads = loadedCards.reduce((a, b) => a + (b.downloads_count || 0), 0);
-        const activeCards = loadedCards.filter(c => c.is_active !== false && c.status !== 'inactive').length;
-
-        // Extract unique user IDs or demo users
-        const userIds = [...new Set(loadedCards.map(c => c.user_id).filter(Boolean))];
-        const syntheticUsers = userIds.map(uid => ({
-          id: uid,
-          name: loadedCards.find(c => c.user_id === uid)?.full_name || 'Card Owner',
-          email: loadedCards.find(c => c.user_id === uid)?.email || 'user@raktabusiness.com',
-          role: 'USER',
-          cards_count: loadedCards.filter(c => c.user_id === uid).length,
-          created_at: loadedCards.find(c => c.user_id === uid)?.created_at
-        }));
-
-        setUsersList(syntheticUsers.length > 0 ? syntheticUsers : [
-          { id: 'usr-1', name: 'Sudheer Borra', email: 'demo@raktabusiness.com', role: 'ADMIN', cards_count: loadedCards.length, created_at: new Date().toISOString() }
-        ]);
-
-        setOverview({
-          totalUsers: syntheticUsers.length || 1,
-          totalCards: loadedCards.length,
-          activeCards,
-          totalViews,
-          totalScans,
-          totalDownloads
-        });
-      } catch (supaErr) {
-        showToast('error', 'Failed to load administrative telemetry.');
-      } finally {
-        setLoading(false);
-      }
+      console.error('Admin telemetry fetch error:', err);
+      showToast('error', 'Failed to load administrative telemetry.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,29 +104,30 @@ export default function AdminPage() {
   const handleToggleStatus = async (cardId, currentStatus) => {
     const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
     try {
-      await api.setCardStatus(cardId, nextStatus);
-    } catch (err) {
-      // Fallback: update in Supabase directly
-      await supabase.from('cards').update({
+      const { error } = await supabase.from('cards').update({
         status: nextStatus,
         is_active: nextStatus === 'active',
         updated_at: new Date().toISOString()
       }).eq('id', cardId);
+
+      if (error) throw error;
+      showToast('success', `Card status changed to ${nextStatus}.`);
+      fetchAdminData();
+    } catch (err) {
+      showToast('error', 'Failed to update card status: ' + err.message);
     }
-    showToast('success', `Card status changed to ${nextStatus}.`);
-    fetchAdminData();
   };
 
   const handleDeleteCard = async (cardId) => {
     if (!window.confirm('Are you sure you want to delete this card as Administrator?')) return;
     try {
-      await api.adminDeleteCard(cardId);
+      const { error } = await supabase.from('cards').delete().eq('id', cardId);
+      if (error) throw error;
+      showToast('success', 'Card deleted by administrator.');
+      fetchAdminData();
     } catch (err) {
-      // Fallback: delete from Supabase directly
-      await supabase.from('cards').delete().eq('id', cardId);
+      showToast('error', 'Failed to delete card: ' + err.message);
     }
-    showToast('success', 'Card deleted by administrator.');
-    fetchAdminData();
   };
 
   return (
