@@ -417,42 +417,37 @@ CREATE TRIGGER trigger_leads_updated_at
   BEFORE UPDATE ON public.leads
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
--- 11. RPC: Legacy Metric Incrementer (Preserved for backwards compatibility)
-CREATE OR REPLACE FUNCTION public.increment_card_metric(card_slug TEXT, metric_type TEXT)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  IF metric_type = 'view' THEN
-    UPDATE public.cards SET views_count = views_count + 1 WHERE slug = card_slug AND is_active = TRUE;
-  ELSIF metric_type = 'scan' THEN
-    UPDATE public.cards SET scans_count = scans_count + 1 WHERE slug = card_slug AND is_active = TRUE;
-  ELSIF metric_type = 'download' OR metric_type = 'vcard_download' THEN
-    UPDATE public.cards SET downloads_count = downloads_count + 1 WHERE slug = card_slug AND is_active = TRUE;
-  END IF;
-END;
-$$;
-GRANT EXECUTE ON FUNCTION public.increment_card_metric(TEXT, TEXT) TO anon, authenticated;
+-- 11. RPC: Metric Incrementer (Preserved for backwards compatibility, supports both metric_type and metric_name)
+DROP FUNCTION IF EXISTS public.increment_card_metric(TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.increment_card_metric(TEXT, TEXT, TEXT);
 
--- Backwards compatibility alias for metric_name parameter
-CREATE OR REPLACE FUNCTION public.increment_card_metric(card_slug TEXT, metric_name TEXT)
+CREATE OR REPLACE FUNCTION public.increment_card_metric(
+  card_slug TEXT,
+  metric_type TEXT DEFAULT NULL,
+  metric_name TEXT DEFAULT NULL
+)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
+DECLARE
+  v_metric TEXT;
 BEGIN
-  IF metric_name = 'view' THEN
+  v_metric := COALESCE(metric_type, metric_name);
+  IF v_metric = 'view' THEN
     UPDATE public.cards SET views_count = views_count + 1 WHERE slug = card_slug AND is_active = TRUE;
-  ELSIF metric_name = 'scan' THEN
+  ELSIF v_metric = 'scan' THEN
     UPDATE public.cards SET scans_count = scans_count + 1 WHERE slug = card_slug AND is_active = TRUE;
-  ELSIF metric_name = 'download' OR metric_name = 'vcard_download' THEN
+  ELSIF v_metric = 'download' OR v_metric = 'vcard_download' THEN
     UPDATE public.cards SET downloads_count = downloads_count + 1 WHERE slug = card_slug AND is_active = TRUE;
   END IF;
 END;
 $$;
+
+GRANT EXECUTE ON FUNCTION public.increment_card_metric(TEXT, TEXT, TEXT) TO anon, authenticated;
 
 -- 12. RPC: Comprehensive Event Tracker with Anti-Abuse Rate Limiting
+DROP FUNCTION IF EXISTS public.record_card_event(TEXT, TEXT, TEXT, TEXT, TEXT);
 CREATE OR REPLACE FUNCTION public.record_card_event(
   p_card_slug TEXT,
   p_event_type TEXT,
@@ -528,6 +523,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.record_card_event(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 
 -- 13. RPC: Submit Lead Enquiry (Public Lead Capture with Auto Analytics and Validation)
+DROP FUNCTION IF EXISTS public.submit_card_lead(TEXT, TEXT, TEXT, TEXT, TEXT);
 CREATE OR REPLACE FUNCTION public.submit_card_lead(
   p_card_slug TEXT,
   p_name TEXT,
