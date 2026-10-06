@@ -1,28 +1,51 @@
 import React, { useState } from 'react';
-import { CreditCard, Lock, Mail, ArrowRight } from 'lucide-react';
+import { CreditCard, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function LoginPage({ onNavigate }) {
-  const { login } = useAuth();
+  const { login, resendVerification } = useAuth();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
+  const [resending, setResending] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setUnconfirmedEmail('');
     try {
       await login(email, password);
       showToast('success', 'Logged in successfully!');
       onNavigate('/dashboard');
     } catch (err) {
-      showToast('error', err.message || 'Invalid email or password');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('email not confirmed')) {
+        setUnconfirmedEmail(email);
+        showToast('error', 'Your email address is not verified yet. Please check your inbox or resend the verification link.');
+      } else {
+        showToast('error', msg || 'Invalid email or password');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const handleResend = async () => {
+    if (!unconfirmedEmail) return;
+    setResending(true);
+    try {
+      await resendVerification(unconfirmedEmail);
+      showToast('success', 'Verification email resent! Please check your inbox and spam folder.');
+    } catch (err) {
+      showToast('error', err.message || 'Failed to resend verification email.');
+    } finally {
+      setResending(false);
+    }
+  };
+
 
   return (
     <div style={{
@@ -60,6 +83,37 @@ export default function LoginPage({ onNavigate }) {
           </p>
         </div>
 
+        {unconfirmedEmail && (
+          <div style={{
+            backgroundColor: 'var(--warning-light)',
+            border: '1px solid var(--warning)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            fontSize: '0.8125rem',
+            color: '#92400E'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <AlertCircle size={18} color="#D97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <strong>Email Verification Required</strong>
+                <p style={{ margin: '0.25rem 0 0', lineHeight: 1.4 }}>
+                  Your account has been created, but your email has not been verified yet. Check your inbox or request a new verification email below.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={resending}
+              onClick={handleResend}
+              className="btn btn-outline btn-sm"
+              style={{ width: '100%', borderColor: '#D97706', color: '#92400E', fontWeight: 700, backgroundColor: '#FFFFFF', marginTop: '0.5rem' }}
+            >
+              {resending ? 'Sending...' : 'Resend Verification Email'}
+            </button>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -81,12 +135,13 @@ export default function LoginPage({ onNavigate }) {
           <div className="form-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label className="form-label form-label-required">Password</label>
-              <span
-                style={{ fontSize: '0.75rem', color: 'var(--secondary)', cursor: 'pointer' }}
-                onClick={() => showToast('info', 'Please contact support or your administrator to reset your password.')}
+              <button
+                type="button"
+                style={{ fontSize: '0.75rem', color: 'var(--secondary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                onClick={() => onNavigate('/forgot-password')}
               >
                 Forgot password?
-              </span>
+              </button>
             </div>
             <div style={{ position: 'relative' }}>
               <input
@@ -101,6 +156,7 @@ export default function LoginPage({ onNavigate }) {
               <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
           </div>
+
 
           <button
             type="submit"

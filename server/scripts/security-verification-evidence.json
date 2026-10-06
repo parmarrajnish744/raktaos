@@ -1,0 +1,136 @@
+{
+  "timestamp": "2026-10-05T19:08:35.057Z",
+  "allPass": true,
+  "results": [
+    {
+      "testNumber": "TEST 1",
+      "testName": "User Authentication & JWT Session Isolation",
+      "status": "PASS",
+      "tableTested": "auth.users",
+      "details": "User A and User B authenticate with completely distinct JWTs and isolated sessions",
+      "evidence": {
+        "userAId": "20dc97bc-7fcd-4340-b8ea-ec039fca9ccc",
+        "userBId": "2724cdd3-0984-4eb2-87f1-ce356d26e1e8",
+        "differentJwtSubjects": true
+      }
+    },
+    {
+      "testNumber": "TEST 2",
+      "testName": "Card Ownership & Cross-User Mutation Prevention",
+      "status": "PASS",
+      "tableTested": "public.cards",
+      "details": "Users can create cards; unauthorized cross-user updates & deletes return 0 rows; inactive cards are hidden from other users",
+      "evidence": {
+        "userADashboardCount": 1,
+        "userBDashboardCount": 2,
+        "updateCardBByA_affected": 0,
+        "deleteCardBByA_affected": 0,
+        "updateCardAByB_affected": 0,
+        "deleteCardAByB_affected": 0,
+        "userASeesInactiveCardB": 0,
+        "cardBNameUnchanged": "Card Owner B"
+      }
+    },
+    {
+      "testNumber": "TEST 3",
+      "testName": "Leads CRM Multi-Tenant Isolation",
+      "status": "PASS",
+      "tableTested": "public.leads",
+      "details": "User A sees only Lead A; User B sees only Lead B; cross-user lead read/update/delete attempts affect 0 rows",
+      "evidence": {
+        "userASeesLeadA": true,
+        "userADoesNotSeeLeadB": true,
+        "userBSeesLeadB": true,
+        "userBDoesNotSeeLeadA": true,
+        "updateLeadBByA_affected": 0,
+        "deleteLeadBByA_affected": 0,
+        "updateLeadAByB_affected": 0,
+        "deleteLeadAByB_affected": 0,
+        "leadBStatusIntact": "New"
+      }
+    },
+    {
+      "testNumber": "TEST 4",
+      "testName": "Analytics Telemetry Isolation",
+      "status": "PASS",
+      "tableTested": "public.analytics_events",
+      "details": "Card owners can query only their own card analytics events; cross-user queries return 0 rows",
+      "evidence": {
+        "userAEventsForCardA": 3,
+        "userAEventsForCardB": 0,
+        "userBEventsForCardB": 2,
+        "userBEventsForCardA": 0
+      }
+    },
+    {
+      "testNumber": "TEST 5",
+      "testName": "Anonymous Public Access Boundaries",
+      "status": "PASS",
+      "tableTested": "public.cards, public.leads, public.analytics_events",
+      "details": "Public active cards and RPC metrics are accessible; private leads and telemetry records return 0 rows for anonymous visitors",
+      "evidence": {
+        "pubCardASlug": "sec-a-1791227300260",
+        "pubCardBSlug": "sec-b-1791227300260",
+        "anonDirectLeadsReadCount": 0,
+        "anonDirectEventsReadCount": 0,
+        "anonDirectInactiveCardReadCount": 0
+      }
+    },
+    {
+      "testNumber": "TEST 6",
+      "testName": "Storage RLS Folder-Level Multi-Tenant Isolation",
+      "status": "PASS",
+      "tableTested": "storage.objects (bucket: card-assets)",
+      "details": "Users can write only to their own <userId>/ folder; cross-user uploads and deletions fail; anon uploads rejected",
+      "evidence": {
+        "userAUploadOwn": true,
+        "userACrossUploadBlocked": true,
+        "uploadCrossErrorMessage": "new row violates row-level security policy",
+        "userBUploadOwn": true,
+        "fileBIntactAfterADeleteAttempt": true,
+        "anonUploadBlocked": true,
+        "anonUploadErrorMessage": "new row violates row-level security policy"
+      }
+    },
+    {
+      "testNumber": "TEST 7",
+      "testName": "Stored Procedure (RPC) Anti-Abuse & Validation",
+      "status": "PASS",
+      "tableTested": "public.increment_card_metric, record_card_event, submit_card_lead",
+      "details": "RPCs enforce input validation, reject inactive cards, and do not expose private rows to callers",
+      "evidence": {
+        "metricRejectedInactive": true,
+        "recordRejectedInactive": true,
+        "recordError": "Card not found or inactive",
+        "validationEnforced": true,
+        "validationError": "Name is required",
+        "leadRejectedInactive": true,
+        "leadProbeReturnsZero": true
+      }
+    },
+    {
+      "testNumber": "TEST 8",
+      "testName": "Frontend & Client Secret Leakage Audit",
+      "status": "PASS",
+      "tableTested": "client/**/*, wordpress/**/*",
+      "details": "Zero private service-role keys or server JWT secrets found in client or WordPress plugins",
+      "evidence": {
+        "clientLeaks": [],
+        "wpLeaks": [],
+        "clean": true
+      }
+    },
+    {
+      "testNumber": "TEST 9",
+      "testName": "Production Architecture & Single Source of Truth",
+      "status": "PASS",
+      "tableTested": "Supabase Cloud Production Instance",
+      "details": "Client exclusively communicates with Supabase Cloud; zero localStorage fallback database; authentic Supabase Auth used without mocks",
+      "evidence": {
+        "usesCloudUrl": true,
+        "noLocalStorageDB": true,
+        "authenticSupabaseAuth": true
+      }
+    }
+  ]
+}

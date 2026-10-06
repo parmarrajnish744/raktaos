@@ -24,6 +24,7 @@ define('RAKTA_CORE_URL', plugin_dir_url(__FILE__));
 require_once RAKTA_CORE_PATH . 'includes/class-rakta-supabase.php';
 require_once RAKTA_CORE_PATH . 'includes/class-rakta-shortcodes.php';
 require_once RAKTA_CORE_PATH . 'includes/class-rakta-elementor.php';
+require_once RAKTA_CORE_PATH . 'includes/class-rakta-auth.php';
 
 /**
  * Main Plugin Orchestrator
@@ -49,6 +50,7 @@ class Rakta_Business_Core {
         // Initialize submodules
         Rakta_Shortcodes::init();
         Rakta_Elementor::init();
+        Rakta_Auth::init();
     }
 
     /**
@@ -70,10 +72,36 @@ class Rakta_Business_Core {
             true
         );
 
+        // Supabase JS official client
+        wp_enqueue_script(
+            'supabase-js',
+            'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+            [],
+            '2.48.0',
+            false
+        );
+
+        // Rakta Client-side Auth Manager
+        wp_enqueue_script(
+            'rakta-auth-script',
+            RAKTA_CORE_URL . 'assets/js/rakta-auth.js',
+            ['jquery', 'supabase-js'],
+            RAKTA_CORE_VERSION,
+            true
+        );
+
         wp_localize_script('rakta-core-script', 'raktaConfig', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('rakta_lead_nonce'),
             'appUrl'  => get_option('rakta_app_url', 'https://app.raktabusiness.com')
+        ]);
+
+        wp_localize_script('rakta-auth-script', 'raktaAuthConfig', [
+            'url'          => get_option('rakta_supabase_url', ''),
+            'anonKey'      => get_option('rakta_supabase_anon_key', ''),
+            'appUrl'       => rtrim(get_option('rakta_app_url', 'https://app.raktabusiness.com'), '/'),
+            'authMode'     => get_option('rakta_auth_mode', 'modal'),
+            'cookieDomain' => get_option('rakta_cookie_domain', '.raktabusiness.com')
         ]);
     }
 
@@ -100,6 +128,8 @@ class Rakta_Business_Core {
         register_setting('rakta_settings_group', 'rakta_supabase_anon_key', ['sanitize_callback' => 'sanitize_text_field']);
         register_setting('rakta_settings_group', 'rakta_app_url', ['sanitize_callback' => 'esc_url_raw']);
         register_setting('rakta_settings_group', 'rakta_cache_ttl', ['sanitize_callback' => 'absint']);
+        register_setting('rakta_settings_group', 'rakta_auth_mode', ['sanitize_callback' => 'sanitize_text_field']);
+        register_setting('rakta_settings_group', 'rakta_cookie_domain', ['sanitize_callback' => 'sanitize_text_field']);
     }
 
     /**
@@ -110,6 +140,8 @@ class Rakta_Business_Core {
         $supabase_key = get_option('rakta_supabase_anon_key', '');
         $app_url = get_option('rakta_app_url', 'https://app.raktabusiness.com');
         $cache_ttl = get_option('rakta_cache_ttl', 300);
+        $auth_mode = get_option('rakta_auth_mode', 'modal');
+        $cookie_domain = get_option('rakta_cookie_domain', '.raktabusiness.com');
         ?>
         <div class="wrap" style="max-width: 840px;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
@@ -148,6 +180,23 @@ class Rakta_Business_Core {
                             </td>
                         </tr>
                         <tr>
+                            <th scope="row"><label for="rakta_auth_mode"><?php _e('Authentication Mode', 'rakta-business-core'); ?></label></th>
+                            <td>
+                                <select name="rakta_auth_mode" id="rakta_auth_mode">
+                                    <option value="modal" <?php selected($auth_mode, 'modal'); ?>><?php _e('Client-Side Modal (Zero Redirect)', 'rakta-business-core'); ?></option>
+                                    <option value="redirect" <?php selected($auth_mode, 'redirect'); ?>><?php _e('Direct Portal Redirection', 'rakta-business-core'); ?></option>
+                                </select>
+                                <p class="description"><?php _e('Modal handles login/register inline in browser via Supabase JS. Redirect sends users to app.raktabusiness.com/login.', 'rakta-business-core'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="rakta_cookie_domain"><?php _e('SSO Cookie Domain', 'rakta-business-core'); ?></label></th>
+                            <td>
+                                <input name="rakta_cookie_domain" type="text" id="rakta_cookie_domain" value="<?php echo esc_attr($cookie_domain); ?>" class="regular-text" placeholder=".raktabusiness.com" />
+                                <p class="description"><?php _e('Root domain for sharing login sessions between WordPress and SaaS portal (e.g. .raktabusiness.com).', 'rakta-business-core'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
                             <th scope="row"><label for="rakta_cache_ttl"><?php _e('Cache Duration (Seconds)', 'rakta-business-core'); ?></label></th>
                             <td>
                                 <input name="rakta_cache_ttl" type="number" id="rakta_cache_ttl" value="<?php echo esc_attr($cache_ttl); ?>" class="small-text" min="0" step="30" />
@@ -169,11 +218,16 @@ class Rakta_Business_Core {
             <div style="margin-top: 30px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
                 <h3 style="margin-top: 0; font-size: 16px;"><?php _e('Shortcodes Reference for Gutenberg & Elementor', 'rakta-business-core'); ?></h3>
                 <ul style="list-style: disc; margin-left: 20px; font-size: 13px; line-height: 1.8;">
+                    <li><code>[rakta_auth_nav]</code> &mdash; <?php _e('Dynamic header navigation widget (Sign In / Register vs Account Dashboard & Sign Out).', 'rakta-business-core'); ?></li>
+                    <li><code>[rakta_auth_modal trigger_text="Sign In"]</code> &mdash; <?php _e('Button triggering popup Supabase authentication modal.', 'rakta-business-core'); ?></li>
+                    <li><code>[rakta_login_form redirect="/dashboard"]</code> &mdash; <?php _e('Inline login card directly connected to Supabase Auth.', 'rakta-business-core'); ?></li>
+                    <li><code>[rakta_register_form redirect="/dashboard/cards/create"]</code> &mdash; <?php _e('Inline registration card with password strength validation.', 'rakta-business-core'); ?></li>
                     <li><code>[rakta_card slug="sudheer-borra"]</code> &mdash; <?php _e('Embeds interactive card preview with instant vCard download and WhatsApp lead action.', 'rakta-business-core'); ?></li>
                     <li><code>[rakta_lead_form card_slug="sudheer-borra"]</code> &mdash; <?php _e('Renders lead capture form synchronizing enquiries directly to Supabase CRM.', 'rakta-business-core'); ?></li>
                     <li><code>[rakta_app_cta text="Create Your Card" plan="pro"]</code> &mdash; <?php _e('Renders high-converting CTA button pointing directly to your SaaS registration portal.', 'rakta-business-core'); ?></li>
                 </ul>
             </div>
+
 
             <script>
             document.addEventListener('DOMContentLoaded', function() {

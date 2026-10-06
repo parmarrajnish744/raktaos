@@ -14,6 +14,9 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 import DashboardOverview from './pages/DashboardOverview';
 import MyCardsPage from './pages/MyCardsPage';
 import CardBuilderPage from './pages/CardBuilderPage';
@@ -173,6 +176,9 @@ function AppContent() {
   else if (currentPath === '/contact') publicPage = <ContactPage onNavigate={navigate} />;
   else if (currentPath === '/login') publicPage = <LoginPage onNavigate={navigate} />;
   else if (currentPath === '/register') publicPage = <RegisterPage onNavigate={navigate} />;
+  else if (currentPath === '/forgot-password') publicPage = <ForgotPasswordPage onNavigate={navigate} />;
+  else if (currentPath === '/reset-password') publicPage = <ResetPasswordPage onNavigate={navigate} />;
+  else if (currentPath.startsWith('/auth/callback')) publicPage = <AuthCallbackPage onNavigate={navigate} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, isSupabaseConfigured } from '../utils/supabaseClient';
+import { supabase, isSupabaseConfigured, getAppBaseUrl } from '../utils/supabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -23,6 +23,7 @@ export function AuthProvider({ children }) {
             email: authUser.email,
             name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
             role: authUser.user_metadata?.role || 'USER',
+            emailConfirmedAt: authUser.email_confirmed_at || authUser.confirmed_at,
             ...authUser.user_metadata
           });
         }
@@ -46,6 +47,7 @@ export function AuthProvider({ children }) {
           email: u.email,
           name: u.user_metadata?.name || u.email?.split('@')[0] || 'User',
           role: u.user_metadata?.role || 'USER',
+          emailConfirmedAt: u.email_confirmed_at || u.confirmed_at,
           ...u.user_metadata
         });
       } else if (event === 'SIGNED_OUT') {
@@ -70,6 +72,7 @@ export function AuthProvider({ children }) {
       email: authUser.email,
       name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
       role: authUser.user_metadata?.role || 'USER',
+      emailConfirmedAt: authUser.email_confirmed_at || authUser.confirmed_at,
       ...authUser.user_metadata
     };
     setUser(normalizedUser);
@@ -78,25 +81,60 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, password) => {
+    const callbackUrl = `${getAppBaseUrl()}/auth/callback?type=signup`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, role: 'USER' }
+        data: { name, role: 'USER' },
+        emailRedirectTo: callbackUrl
       }
     });
     if (error) throw new Error(error.message);
 
     const authUser = data.user;
     const normalizedUser = {
-      id: authUser.id,
-      email: authUser.email,
+      id: authUser?.id,
+      email: authUser?.email,
       name,
-      role: 'USER'
+      role: 'USER',
+      emailConfirmedAt: authUser?.email_confirmed_at || authUser?.confirmed_at
     };
-    setUser(normalizedUser);
-    setSession(data.session);
+    if (data.session) {
+      setUser(normalizedUser);
+      setSession(data.session);
+    }
     return { user: normalizedUser, session: data.session };
+  };
+
+  const forgotPassword = async (email) => {
+    const callbackUrl = `${getAppBaseUrl()}/auth/callback?type=recovery`;
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: callbackUrl
+    });
+    if (error) throw new Error(error.message);
+    return data;
+  };
+
+  const resetPassword = async (newPassword) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    if (error) throw new Error(error.message);
+    return data;
+  };
+
+  const resendVerification = async (email) => {
+    const callbackUrl = `${getAppBaseUrl()}/auth/callback?type=signup`;
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: callbackUrl
+      }
+    });
+    if (error) throw new Error(error.message);
+    return data;
   };
 
   const logout = async () => {
@@ -155,15 +193,20 @@ export function AuthProvider({ children }) {
         loading,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'ADMIN',
+        isEmailVerified: Boolean(user?.emailConfirmedAt),
         login,
         register,
         logout,
+        forgotPassword,
+        resetPassword,
+        resendVerification,
         updateProfile,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useAuth() {
