@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Environment variables
-const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const rawSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Environment variables with production defaults
+const FALLBACK_SUPABASE_URL = 'https://xsflkmhoxriskrpqpqyj.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzZmxrbWhveHJpc2tycHFwcXlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMjkwMDgsImV4cCI6MjEwNjcwNTAwOH0._s-sDwg0VYa_EYeF1vjrH9YYupnNLE8tD8K4swlkr2k';
+
+const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+const rawSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY;
 const rawAppUrl = import.meta.env.VITE_APP_URL;
 
 // Configurable application URL (defaults to current window origin)
@@ -93,8 +96,8 @@ export const crossDomainStorage = {
 
 // Production Supabase Client instance (Strictly cloud-backed, zero localStorage fallback DB)
 export const supabase = createClient(
-  rawSupabaseUrl || 'https://xsflkmhoxriskrpqpqyj.supabase.co',
-  rawSupabaseAnonKey || '',
+  rawSupabaseUrl || FALLBACK_SUPABASE_URL,
+  rawSupabaseAnonKey || FALLBACK_SUPABASE_ANON_KEY,
   {
     auth: {
       storage: crossDomainStorage,
