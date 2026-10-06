@@ -318,6 +318,9 @@ export default function DashboardOverview({ onNavigate }) {
       {activeQRCard && (
         <QRModal
           card={activeQRCard}
+          cardUrl={getPublicCardUrl(activeQRCard.slug || activeQRCard.username)}
+          cardName={activeQRCard.full_name}
+          primaryColor={activeQRCard.primary_color}
           isOpen={!!activeQRCard}
           onClose={() => setActiveQRCard(null)}
         />
@@ -326,6 +329,8 @@ export default function DashboardOverview({ onNavigate }) {
       {activeShareCard && (
         <ShareModal
           card={activeShareCard}
+          cardUrl={getPublicCardUrl(activeShareCard.slug || activeShareCard.username)}
+          cardName={activeShareCard.full_name}
           isOpen={!!activeShareCard}
           onClose={() => setActiveShareCard(null)}
         />

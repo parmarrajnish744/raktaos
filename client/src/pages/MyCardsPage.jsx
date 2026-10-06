@@ -308,6 +308,7 @@ export default function MyCardsPage({ onNavigate }) {
       {/* QR Modal */}
       {activeQRCard && (
         <QRModal
+          card={activeQRCard}
           isOpen={!!activeQRCard}
           onClose={() => setActiveQRCard(null)}
           cardUrl={getPublicCardUrl(activeQRCard.slug || activeQRCard.username)}
@@ -319,6 +320,7 @@ export default function MyCardsPage({ onNavigate }) {
       {/* Share Modal */}
       {activeShareCard && (
         <ShareModal
+          card={activeShareCard}
           isOpen={!!activeShareCard}
           onClose={() => setActiveShareCard(null)}
           cardUrl={getPublicCardUrl(activeShareCard.slug || activeShareCard.username)}

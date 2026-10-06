@@ -1,17 +1,28 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, Share2, Send, MessageCircle } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { getPublicCardUrl } from '../../utils/supabaseClient';
 
-export default function ShareModal({ isOpen, onClose, cardUrl, cardName }) {
+export default function ShareModal({
+  isOpen,
+  onClose,
+  card,
+  cardUrl: propCardUrl,
+  cardName: propCardName
+}) {
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
-  const encodedUrl = encodeURIComponent(cardUrl);
-  const shareMessage = encodeURIComponent(`Here is the digital business card of ${cardName || 'our contact'}:\n${cardUrl}`);
+  const cardUrl = propCardUrl || (card ? (card.cardUrl || card.url || (card.slug || card.username ? getPublicCardUrl(card.slug || card.username) : '')) : '');
+  const cardName = propCardName || card?.full_name || card?.business_name || card?.title || 'Digital Business Card';
+
+  const encodedUrl = encodeURIComponent(cardUrl || '');
+  const shareMessage = encodeURIComponent(`Here is the digital business card of ${cardName || 'our contact'}:\n${cardUrl || ''}`);
 
   const handleCopy = () => {
+    if (!cardUrl) return;
     navigator.clipboard.writeText(cardUrl).then(() => {
       setCopied(true);
       showToast('success', 'Digital card link copied to clipboard!');

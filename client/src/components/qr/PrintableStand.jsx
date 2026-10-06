@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Printer, Download, X, QrCode, Building, Sparkles } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useToast } from '../../context/ToastContext';
+import { getPublicCardUrl } from '../../utils/supabaseClient';
 
 export default function PrintableStand({ card, onClose }) {
   const { showToast } = useToast();
   const [qrDataUrl, setQrDataUrl] = useState('');
 
-  const cardUrl = card?.public_url || `${window.location.origin}/card/${card?.username || 'contact'}`;
+  const cardUrl = card?.public_url || (card?.slug ? getPublicCardUrl(card.slug) : (card?.username ? getPublicCardUrl(card.username) : `${window.location.origin}/c/demo`));
   const primaryColor = card?.primary_color || '#0B2E59';
 
   useEffect(() => {
